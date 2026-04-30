@@ -39,6 +39,52 @@ uint8_t special2[8] = {
         0b00000
 };
 
+uint8_t heart[8]   = {
+		0b000000,
+		0b01010,
+		0b11111,
+		0b11111,
+		0b01110,
+		0b00100,
+		0b00000,
+		0b00000
+};
+
+uint8_t Cyrilic[8] = {0x1F, 0x10, 0x1E, 0x11, 0x11, 0x11, 0x1E, 0x00}; //E
+
+uint8_t Flecha[8] = {
+		0b00000,
+		0b00100,
+		0b00110,
+		0b11111,
+		0b00110,
+		0b00100,
+		0b00000,
+		0b00000
+};
+
+uint8_t Campana[8] = {
+		0b00100,
+		0b01110,
+		0b01110,
+		0b01110,
+		0b11111,
+		0b00000,
+		0b00100,
+		0b00000
+};
+
+uint8_t degrees[8] = {
+		0b11100,
+		0b10100,
+		0b11100,
+		0b00000,
+		0b00000,
+		0b00000,
+		0b00000,
+		0b00000
+};
+
 void HD44780_Init(uint8_t rows)
 {
   dpRows = rows;
@@ -90,6 +136,11 @@ void HD44780_Init(uint8_t rows)
 
   HD44780_CreateSpecialChar(0, special1);
   HD44780_CreateSpecialChar(1, special2);
+  HD44780_CreateSpecialChar(2, heart);
+  HD44780_CreateSpecialChar(3, Cyrilic);
+  HD44780_CreateSpecialChar(4, Flecha);
+  HD44780_CreateSpecialChar(5, Campana);
+  HD44780_CreateSpecialChar(6, degrees);
 
   HD44780_Home();
 }
