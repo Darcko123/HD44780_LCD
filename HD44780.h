@@ -14,15 +14,7 @@
 // INCLUDES
 // ============================================================================
 
-/* Ajustar según la familia STM32 utilizada:
- * STM32F0xx: #include "stm32f0xx_hal.h"
- * STM32F1xx: #include "stm32f1xx_hal.h"
- * STM32F4xx: #include "stm32f4xx_hal.h"
- */
-#include "stm32f1xx_hal.h"
-
-#include <stdint.h>
-#include <stdbool.h>
+#include "main.h"
 
 // ============================================================================
 // MACROS Y CONSTANTES DE COMANDOS HD44780
@@ -151,7 +143,6 @@ HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charm
 HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index);
 HD44780_Status_t HD44780_SetCursor(uint8_t col, uint8_t row);
 HD44780_Status_t HD44780_SetBacklight(uint8_t new_val);
-HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, const uint8_t *rows);
 HD44780_Status_t HD44780_PrintStr(const char c[]);
 
 #ifdef __cplusplus

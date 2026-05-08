@@ -276,7 +276,7 @@ HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
     HD44780_Status_t status;
     status = ExpanderWrite(dpBacklight);
     if (status != HD44780_OK) { return status; }
-    HAL_Delay(1000);
+    HAL_Delay(20);
 
     /* Secuencia de modo 4-bit — sensible al timing, errores no propagados */
     Write4Bits(0x03 << 4);
@@ -320,6 +320,8 @@ HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
  */
 HD44780_Status_t HD44780_Clear(void)
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
     HD44780_Status_t status = SendCommand(LCD_CLEARDISPLAY);
     if (status != HD44780_OK) { return status; }
     DelayUS(2000);
@@ -333,6 +335,8 @@ HD44780_Status_t HD44780_Clear(void)
  */
 HD44780_Status_t HD44780_Home(void)
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
     HD44780_Status_t status = SendCommand(LCD_RETURNHOME);
     if (status != HD44780_OK) { return status; }
     DelayUS(2000);
@@ -362,8 +366,12 @@ HD44780_Status_t HD44780_SetCursor(uint8_t col, uint8_t row)
  */
 HD44780_Status_t HD44780_NoDisplay(void)
 {
-    dpControl &= ~LCD_DISPLAYON;
-    return SendCommand(LCD_DISPLAYCONTROL | dpControl);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempControl = dpControl & ~LCD_DISPLAYON;
+    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    if (status == HD44780_OK) { dpControl = tempControl; }
+    return status;
 }
 
 /**
@@ -373,8 +381,12 @@ HD44780_Status_t HD44780_NoDisplay(void)
  */
 HD44780_Status_t HD44780_Display(void)
 {
-    dpControl |= LCD_DISPLAYON;
-    return SendCommand(LCD_DISPLAYCONTROL | dpControl);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempControl = dpControl | LCD_DISPLAYON;
+    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    if (status == HD44780_OK) { dpControl = tempControl; }
+    return status;
 }
 
 /**
@@ -384,8 +396,12 @@ HD44780_Status_t HD44780_Display(void)
  */
 HD44780_Status_t HD44780_NoCursor(void)
 {
-    dpControl &= ~LCD_CURSORON;
-    return SendCommand(LCD_DISPLAYCONTROL | dpControl);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempControl = dpControl & ~LCD_CURSORON;
+    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    if (status == HD44780_OK) { dpControl = tempControl; }
+    return status;
 }
 
 /**
@@ -395,8 +411,12 @@ HD44780_Status_t HD44780_NoCursor(void)
  */
 HD44780_Status_t HD44780_Cursor(void)
 {
-    dpControl |= LCD_CURSORON;
-    return SendCommand(LCD_DISPLAYCONTROL | dpControl);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempControl = dpControl | LCD_CURSORON;
+    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    if (status == HD44780_OK) { dpControl = tempControl; }
+    return status;
 }
 
 /**
@@ -406,8 +426,12 @@ HD44780_Status_t HD44780_Cursor(void)
  */
 HD44780_Status_t HD44780_NoBlink(void)
 {
-    dpControl &= ~LCD_BLINKON;
-    return SendCommand(LCD_DISPLAYCONTROL | dpControl);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempControl = dpControl & ~LCD_BLINKON;
+    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    if (status == HD44780_OK) { dpControl = tempControl; }
+    return status;
 }
 
 /**
@@ -417,8 +441,12 @@ HD44780_Status_t HD44780_NoBlink(void)
  */
 HD44780_Status_t HD44780_Blink(void)
 {
-    dpControl |= LCD_BLINKON;
-    return SendCommand(LCD_DISPLAYCONTROL | dpControl);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempControl = dpControl | LCD_BLINKON;
+    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    if (status == HD44780_OK) { dpControl = tempControl; }
+    return status;
 }
 
 /**
@@ -428,6 +456,8 @@ HD44780_Status_t HD44780_Blink(void)
  */
 HD44780_Status_t HD44780_ScrollDisplayLeft(void)
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
     return SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
 }
 
@@ -438,6 +468,8 @@ HD44780_Status_t HD44780_ScrollDisplayLeft(void)
  */
 HD44780_Status_t HD44780_ScrollDisplayRight(void)
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
     return SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
 }
 
@@ -448,8 +480,12 @@ HD44780_Status_t HD44780_ScrollDisplayRight(void)
  */
 HD44780_Status_t HD44780_LeftToRight(void)
 {
-    dpMode |= LCD_ENTRYLEFT;
-    return SendCommand(LCD_ENTRYMODESET | dpMode);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempMode = dpMode | LCD_ENTRYLEFT;
+    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    if (status == HD44780_OK) { dpMode = tempMode; }
+    return status;
 }
 
 /**
@@ -459,8 +495,12 @@ HD44780_Status_t HD44780_LeftToRight(void)
  */
 HD44780_Status_t HD44780_RightToLeft(void)
 {
-    dpMode &= ~LCD_ENTRYLEFT;
-    return SendCommand(LCD_ENTRYMODESET | dpMode);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempMode = dpMode & ~LCD_ENTRYLEFT;
+    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    if (status == HD44780_OK) { dpMode = tempMode; }
+    return status;
 }
 
 /**
@@ -470,8 +510,12 @@ HD44780_Status_t HD44780_RightToLeft(void)
  */
 HD44780_Status_t HD44780_AutoScroll(void)
 {
-    dpMode |= LCD_ENTRYSHIFTINCREMENT;
-    return SendCommand(LCD_ENTRYMODESET | dpMode);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t tempMode = dpMode | LCD_ENTRYSHIFTINCREMENT;
+    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    if (status == HD44780_OK) { dpMode = tempMode; }
+    return status;
 }
 
 /**
@@ -481,8 +525,12 @@ HD44780_Status_t HD44780_AutoScroll(void)
  */
 HD44780_Status_t HD44780_NoAutoScroll(void)
 {
-    dpMode &= ~LCD_ENTRYSHIFTINCREMENT;
-    return SendCommand(LCD_ENTRYMODESET | dpMode);
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+    
+    uint8_t tempMode = dpMode & ~LCD_ENTRYSHIFTINCREMENT;
+    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    if (status == HD44780_OK) { dpMode = tempMode; }
+    return status;
 }
 
 /**
@@ -494,6 +542,7 @@ HD44780_Status_t HD44780_NoAutoScroll(void)
  */
 HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charmap[])
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
     if (charmap == NULL) { return HD44780_INVALID_PARAM; }
 
     HD44780_Status_t status;
@@ -519,20 +568,8 @@ HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charm
 HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
-    return SendChar(index);
-}
 
-/**
- * @brief 
- * 
- * @param char_num 
- * @param rows 
- * @return HD44780_Status_t 
- */
-HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, const uint8_t *rows)
-{
-    if (rows == NULL) { return HD44780_INVALID_PARAM; }
-    return HD44780_CreateSpecialChar(char_num, rows);
+    return SendChar(index);
 }
 
 /**
@@ -564,6 +601,7 @@ HD44780_Status_t HD44780_PrintStr(const char c[])
  */
 HD44780_Status_t HD44780_SetBacklight(uint8_t new_val)
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
     if (new_val) { return HD44780_Backlight();   }
     else         { return HD44780_NoBacklight(); }
 }
@@ -575,8 +613,13 @@ HD44780_Status_t HD44780_SetBacklight(uint8_t new_val)
  */
 HD44780_Status_t HD44780_NoBacklight(void)
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    uint8_t prevBacklight = dpBacklight;
     dpBacklight = LCD_NOBACKLIGHT;
-    return ExpanderWrite(0);
+    HD44780_Status_t status = ExpanderWrite(0);
+    if (status != HD44780_OK) { dpBacklight = prevBacklight; }
+    return status;
 }
 
 /**
@@ -586,6 +629,11 @@ HD44780_Status_t HD44780_NoBacklight(void)
  */
 HD44780_Status_t HD44780_Backlight(void)
 {
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+    
+    uint8_t prevBacklight = dpBacklight;
     dpBacklight = LCD_BACKLIGHT;
-    return ExpanderWrite(0);
+    HD44780_Status_t status = ExpanderWrite(0);
+    if (status != HD44780_OK) { dpBacklight = prevBacklight; }
+    return status;
 }
