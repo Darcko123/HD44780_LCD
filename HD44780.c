@@ -4,7 +4,7 @@
  *
  * @author Eziya - Daniel Ruiz
  * @date April 30, 2026
- * @version 2.0.0
+ * @version 2.1.0
  */
 
 #include "HD44780.h"
@@ -22,7 +22,7 @@ static uint8_t dpMode;
 static uint8_t dpRows;
 static uint8_t dpBacklight;
 
-static uint8_t special1[8] = {
+const uint8_t special1[8] = {
         0b00000,
         0b11001,
         0b11011,
@@ -33,7 +33,7 @@ static uint8_t special1[8] = {
         0b00000
 };
 
-static uint8_t special2[8] = {
+const uint8_t special2[8] = {
         0b11000,
         0b11000,
         0b00110,
@@ -44,7 +44,7 @@ static uint8_t special2[8] = {
         0b00000
 };
 
-static uint8_t heart[8] = {
+const uint8_t heart[8] = {
         0b00000,
         0b01010,
         0b11111,
@@ -55,9 +55,9 @@ static uint8_t heart[8] = {
         0b00000
 };
 
-static uint8_t Cyrilic[8] = {0x1F, 0x10, 0x1E, 0x11, 0x11, 0x11, 0x1E, 0x00};
+const uint8_t Cyrilic[8] = {0x1F, 0x10, 0x1E, 0x11, 0x11, 0x11, 0x1E, 0x00};
 
-static uint8_t Flecha[8] = {
+const uint8_t Flecha[8] = {
         0b00000,
         0b00100,
         0b00110,
@@ -68,7 +68,7 @@ static uint8_t Flecha[8] = {
         0b00000
 };
 
-static uint8_t Campana[8] = {
+const uint8_t Campana[8] = {
         0b00100,
         0b01110,
         0b01110,
@@ -79,7 +79,7 @@ static uint8_t Campana[8] = {
         0b00000
 };
 
-static uint8_t degrees[8] = {
+const uint8_t degrees[8] = {
         0b11100,
         0b10100,
         0b11100,
@@ -107,6 +107,11 @@ static HD44780_Status_t SendChar(uint8_t ch);
 // FUNCIONES PRIVADAS
 // ============================================================================
 
+/**
+ * @brief 
+ * 
+ * @param us 
+ */
 static void DelayUS(uint32_t us)
 {
     uint32_t cycles = (SystemCoreClock / 1000000L) * us;
@@ -119,6 +124,10 @@ static void DelayUS(uint32_t us)
     } while (cnt < cycles);
 }
 
+/**
+ * @brief 
+ * 
+ */
 static void DelayInit(void)
 {
     CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
@@ -134,6 +143,12 @@ static void DelayInit(void)
     __ASM volatile ("NOP");
 }
 
+/**
+ * @brief 
+ * 
+ * @param _data 
+ * @return HD44780_Status_t 
+ */
 static HD44780_Status_t ExpanderWrite(uint8_t _data)
 {
     uint8_t data = _data | dpBacklight;
@@ -145,6 +160,12 @@ static HD44780_Status_t ExpanderWrite(uint8_t _data)
     return HD44780_OK;
 }
 
+/**
+ * @brief 
+ * 
+ * @param _data 
+ * @return HD44780_Status_t 
+ */
 static HD44780_Status_t PulseEnable(uint8_t _data)
 {
     HD44780_Status_t status;
@@ -160,6 +181,12 @@ static HD44780_Status_t PulseEnable(uint8_t _data)
     return HD44780_OK;
 }
 
+/**
+ * @brief 
+ * 
+ * @param value 
+ * @return HD44780_Status_t 
+ */
 static HD44780_Status_t Write4Bits(uint8_t value)
 {
     HD44780_Status_t status;
@@ -169,6 +196,13 @@ static HD44780_Status_t Write4Bits(uint8_t value)
     return PulseEnable(value);
 }
 
+/**
+ * @brief 
+ * 
+ * @param value 
+ * @param mode 
+ * @return HD44780_Status_t 
+ */
 static HD44780_Status_t Send(uint8_t value, uint8_t mode)
 {
     uint8_t highnib = value & 0xF0;
@@ -184,11 +218,23 @@ static HD44780_Status_t Send(uint8_t value, uint8_t mode)
     return Write4Bits(lownib | mode);
 }
 
+/**
+ * @brief 
+ * 
+ * @param cmd 
+ * @return HD44780_Status_t 
+ */
 static HD44780_Status_t SendCommand(uint8_t cmd)
 {
     return Send(cmd, 0);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ch 
+ * @return HD44780_Status_t 
+ */
 static HD44780_Status_t SendChar(uint8_t ch)
 {
     return Send(ch, RS);
@@ -258,14 +304,6 @@ HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
     if (status != HD44780_OK) { return status; }
     DelayUS(4500);
 
-    HD44780_CreateSpecialChar(0, special1);
-    HD44780_CreateSpecialChar(1, special2);
-    HD44780_CreateSpecialChar(2, heart);
-    HD44780_CreateSpecialChar(3, Cyrilic);
-    HD44780_CreateSpecialChar(4, Flecha);
-    HD44780_CreateSpecialChar(5, Campana);
-    HD44780_CreateSpecialChar(6, degrees);
-
     status = SendCommand(LCD_RETURNHOME);
     if (status != HD44780_OK) { return status; }
     DelayUS(2000);
@@ -275,6 +313,11 @@ HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
     return HD44780_OK;
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_Clear(void)
 {
     HD44780_Status_t status = SendCommand(LCD_CLEARDISPLAY);
@@ -283,6 +326,11 @@ HD44780_Status_t HD44780_Clear(void)
     return HD44780_OK;
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_Home(void)
 {
     HD44780_Status_t status = SendCommand(LCD_RETURNHOME);
@@ -291,6 +339,13 @@ HD44780_Status_t HD44780_Home(void)
     return HD44780_OK;
 }
 
+/**
+ * @brief 
+ * 
+ * @param col 
+ * @param row 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_SetCursor(uint8_t col, uint8_t row)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
@@ -300,77 +355,144 @@ HD44780_Status_t HD44780_SetCursor(uint8_t col, uint8_t row)
     return SendCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_NoDisplay(void)
 {
     dpControl &= ~LCD_DISPLAYON;
     return SendCommand(LCD_DISPLAYCONTROL | dpControl);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_Display(void)
 {
     dpControl |= LCD_DISPLAYON;
     return SendCommand(LCD_DISPLAYCONTROL | dpControl);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_NoCursor(void)
 {
     dpControl &= ~LCD_CURSORON;
     return SendCommand(LCD_DISPLAYCONTROL | dpControl);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_Cursor(void)
 {
     dpControl |= LCD_CURSORON;
     return SendCommand(LCD_DISPLAYCONTROL | dpControl);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_NoBlink(void)
 {
     dpControl &= ~LCD_BLINKON;
     return SendCommand(LCD_DISPLAYCONTROL | dpControl);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_Blink(void)
 {
     dpControl |= LCD_BLINKON;
     return SendCommand(LCD_DISPLAYCONTROL | dpControl);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_ScrollDisplayLeft(void)
 {
     return SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_ScrollDisplayRight(void)
 {
     return SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_LeftToRight(void)
 {
     dpMode |= LCD_ENTRYLEFT;
     return SendCommand(LCD_ENTRYMODESET | dpMode);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_RightToLeft(void)
 {
     dpMode &= ~LCD_ENTRYLEFT;
     return SendCommand(LCD_ENTRYMODESET | dpMode);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_AutoScroll(void)
 {
     dpMode |= LCD_ENTRYSHIFTINCREMENT;
     return SendCommand(LCD_ENTRYMODESET | dpMode);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_NoAutoScroll(void)
 {
     dpMode &= ~LCD_ENTRYSHIFTINCREMENT;
     return SendCommand(LCD_ENTRYMODESET | dpMode);
 }
 
-HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, uint8_t charmap[])
+/**
+ * @brief 
+ * 
+ * @param location 
+ * @param charmap 
+ * @return HD44780_Status_t 
+ */
+HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charmap[])
 {
     if (charmap == NULL) { return HD44780_INVALID_PARAM; }
 
@@ -388,18 +510,37 @@ HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, uint8_t charmap[])
     return HD44780_OK;
 }
 
+/**
+ * @brief 
+ * 
+ * @param index 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
     return SendChar(index);
 }
 
-HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, uint8_t *rows)
+/**
+ * @brief 
+ * 
+ * @param char_num 
+ * @param rows 
+ * @return HD44780_Status_t 
+ */
+HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, const uint8_t *rows)
 {
     if (rows == NULL) { return HD44780_INVALID_PARAM; }
     return HD44780_CreateSpecialChar(char_num, rows);
 }
 
+/**
+ * @brief 
+ * 
+ * @param c 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_PrintStr(const char c[])
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
@@ -415,18 +556,34 @@ HD44780_Status_t HD44780_PrintStr(const char c[])
     return HD44780_OK;
 }
 
+/**
+ * @brief 
+ * 
+ * @param new_val 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_SetBacklight(uint8_t new_val)
 {
     if (new_val) { return HD44780_Backlight();   }
     else         { return HD44780_NoBacklight(); }
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_NoBacklight(void)
 {
     dpBacklight = LCD_NOBACKLIGHT;
     return ExpanderWrite(0);
 }
 
+/**
+ * @brief 
+ * 
+ * @return HD44780_Status_t 
+ */
 HD44780_Status_t HD44780_Backlight(void)
 {
     dpBacklight = LCD_BACKLIGHT;

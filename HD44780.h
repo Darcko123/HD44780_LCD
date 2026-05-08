@@ -4,7 +4,7 @@
  *
  * @author Eziya - Daniel Ruiz
  * @date April 30, 2026
- * @version 2.0.0
+ * @version 2.1.0
  */
 
 #ifndef HD44780_H
@@ -100,6 +100,18 @@ typedef enum {
 } HD44780_Status_t;
 
 // ============================================================================
+// VARIABLES PRIVADAS
+// ============================================================================
+
+extern const uint8_t special1[8];
+extern const uint8_t special2[8];
+extern const uint8_t heart[8];
+extern const uint8_t Cyrilic[8];
+extern const uint8_t Flecha[8];
+extern const uint8_t Campana[8];
+extern const uint8_t degrees[8];
+
+// ============================================================================
 // PROTOTIPOS DE FUNCIONES PÚBLICAS
 // ============================================================================
 
@@ -135,11 +147,11 @@ HD44780_Status_t HD44780_NoBacklight(void);
 HD44780_Status_t HD44780_Backlight(void);
 HD44780_Status_t HD44780_AutoScroll(void);
 HD44780_Status_t HD44780_NoAutoScroll(void);
-HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, uint8_t charmap[]);
+HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charmap[]);
 HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index);
 HD44780_Status_t HD44780_SetCursor(uint8_t col, uint8_t row);
 HD44780_Status_t HD44780_SetBacklight(uint8_t new_val);
-HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, uint8_t *rows);
+HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, const uint8_t *rows);
 HD44780_Status_t HD44780_PrintStr(const char c[]);
 
 #ifdef __cplusplus
