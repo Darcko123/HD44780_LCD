@@ -103,14 +103,14 @@ const uint8_t degrees[8] = {
 // PROTOTIPOS DE FUNCIONES PRIVADAS
 // ============================================================================
 
-static void             DelayUS(uint32_t us);
-static void             DelayInit(void);
-static HD44780_Status_t ExpanderWrite(uint8_t data);
-static HD44780_Status_t PulseEnable(uint8_t data);
-static HD44780_Status_t Write4Bits(uint8_t value);
-static HD44780_Status_t Send(uint8_t value, uint8_t mode);
-static HD44780_Status_t SendCommand(uint8_t cmd);
-static HD44780_Status_t SendChar(uint8_t ch);
+static void             hd44780_DelayUS(uint32_t us);
+static void             hd44780_DelayInit(void);
+static HD44780_Status_t hd44780_ExpanderWrite(uint8_t data);
+static HD44780_Status_t hd44780_PulseEnable(uint8_t data);
+static HD44780_Status_t hd44780_Write4Bits(uint8_t value);
+static HD44780_Status_t hd44780_Send(uint8_t value, uint8_t mode);
+static HD44780_Status_t hd44780_SendCommand(uint8_t cmd);
+static HD44780_Status_t hd44780_SendChar(uint8_t ch);
 
 // ============================================================================
 // FUNCIONES PRIVADAS
@@ -121,7 +121,7 @@ static HD44780_Status_t SendChar(uint8_t ch);
  *
  * @param[in] us Tiempo de espera en microsegundos.
  */
-static void DelayUS(uint32_t us)
+static void hd44780_DelayUS(uint32_t us)
 {
     uint32_t cycles = (SystemCoreClock / 1000000L) * us;
     uint32_t start  = DWT->CYCCNT;
@@ -136,7 +136,7 @@ static void DelayUS(uint32_t us)
 /**
  * @brief Habilita el contador de ciclos DWT para temporización de microsegundos.
  */
-static void DelayInit(void)
+static void hd44780_DelayInit(void)
 {
     CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
     CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk;
@@ -158,7 +158,7 @@ static void DelayInit(void)
  * @return HD44780_Status_t HD44780_OK si la transmisión fue exitosa,
  *         HD44780_TIMEOUT o HD44780_ERROR en caso contrario.
  */
-static HD44780_Status_t ExpanderWrite(uint8_t _data)
+static HD44780_Status_t hd44780_ExpanderWrite(uint8_t _data)
 {
     uint8_t data = _data | dpBacklight;
     HAL_StatusTypeDef halStatus = HAL_I2C_Master_Transmit(
@@ -175,17 +175,17 @@ static HD44780_Status_t ExpanderWrite(uint8_t _data)
  * @param[in] _data Dato con el bit Enable a pulsar.
  * @return HD44780_Status_t HD44780_OK si el pulso fue exitoso, error en caso contrario.
  */
-static HD44780_Status_t PulseEnable(uint8_t _data)
+static HD44780_Status_t hd44780_PulseEnable(uint8_t _data)
 {
     HD44780_Status_t status;
 
-    status = ExpanderWrite(_data | ENABLE);
+    status = hd44780_ExpanderWrite(_data | ENABLE);
     if (status != HD44780_OK) { return status; }
-    DelayUS(20);
+    hd44780_DelayUS(20);
 
-    status = ExpanderWrite(_data & ~ENABLE);
+    status = hd44780_ExpanderWrite(_data & ~ENABLE);
     if (status != HD44780_OK) { return status; }
-    DelayUS(20);
+    hd44780_DelayUS(20);
 
     return HD44780_OK;
 }
@@ -196,13 +196,13 @@ static HD44780_Status_t PulseEnable(uint8_t _data)
  * @param[in] value Nibble a escribir (bits [7:4] contienen los datos).
  * @return HD44780_Status_t HD44780_OK si la escritura fue exitosa, error en caso contrario.
  */
-static HD44780_Status_t Write4Bits(uint8_t value)
+static HD44780_Status_t hd44780_Write4Bits(uint8_t value)
 {
     HD44780_Status_t status;
 
-    status = ExpanderWrite(value);
+    status = hd44780_ExpanderWrite(value);
     if (status != HD44780_OK) { return status; }
-    return PulseEnable(value);
+    return hd44780_PulseEnable(value);
 }
 
 /**
@@ -212,19 +212,19 @@ static HD44780_Status_t Write4Bits(uint8_t value)
  * @param[in] mode  Modo de envío: 0 para comando (RS=0), RS para dato (RS=1).
  * @return HD44780_Status_t HD44780_OK si el envío fue exitoso, error en caso contrario.
  */
-static HD44780_Status_t Send(uint8_t value, uint8_t mode)
+static HD44780_Status_t hd44780_Send(uint8_t value, uint8_t mode)
 {
     uint8_t highnib = value & 0xF0;
     uint8_t lownib  = (value << 4) & 0xF0;
     HD44780_Status_t status;
 
-    status = Write4Bits(highnib | mode);
+    status = hd44780_Write4Bits(highnib | mode);
     if (status != HD44780_OK)
 	{ 
 		return status;
 	}
 
-    return Write4Bits(lownib | mode);
+    return hd44780_Write4Bits(lownib | mode);
 }
 
 /**
@@ -233,9 +233,9 @@ static HD44780_Status_t Send(uint8_t value, uint8_t mode)
  * @param[in] cmd Comando a enviar al controlador HD44780.
  * @return HD44780_Status_t HD44780_OK si el comando fue enviado correctamente, error en caso contrario.
  */
-static HD44780_Status_t SendCommand(uint8_t cmd)
+static HD44780_Status_t hd44780_SendCommand(uint8_t cmd)
 {
-    return Send(cmd, 0);
+    return hd44780_Send(cmd, 0);
 }
 
 /**
@@ -244,9 +244,9 @@ static HD44780_Status_t SendCommand(uint8_t cmd)
  * @param[in] ch Carácter a mostrar en el LCD.
  * @return HD44780_Status_t HD44780_OK si el carácter fue enviado correctamente, error en caso contrario.
  */
-static HD44780_Status_t SendChar(uint8_t ch)
+static HD44780_Status_t hd44780_SendChar(uint8_t ch)
 {
-    return Send(ch, RS);
+    return hd44780_Send(ch, RS);
 }
 
 // ============================================================================
@@ -279,43 +279,43 @@ HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
     if (dpRows > 1) { dpFunction |= LCD_2LINE;    }
     else            { dpFunction |= LCD_5x10DOTS; }
 
-    DelayInit();
+    hd44780_DelayInit();
     HAL_Delay(50);
 
     HD44780_Status_t status;
-    status = ExpanderWrite(dpBacklight);
+    status = hd44780_ExpanderWrite(dpBacklight);
     if (status != HD44780_OK) { return status; }
     HAL_Delay(20);
 
     /* Secuencia de modo 4-bit — sensible al timing, errores no propagados */
-    Write4Bits(0x03 << 4);
-    DelayUS(4500);
-    Write4Bits(0x03 << 4);
-    DelayUS(4500);
-    Write4Bits(0x03 << 4);
-    DelayUS(4500);
-    Write4Bits(0x02 << 4);
-    DelayUS(100);
+    hd44780_Write4Bits(0x03 << 4);
+    hd44780_DelayUS(4500);
+    hd44780_Write4Bits(0x03 << 4);
+    hd44780_DelayUS(4500);
+    hd44780_Write4Bits(0x03 << 4);
+    hd44780_DelayUS(4500);
+    hd44780_Write4Bits(0x02 << 4);
+    hd44780_DelayUS(100);
 
-    status = SendCommand(LCD_FUNCTIONSET | dpFunction);
+    status = hd44780_SendCommand(LCD_FUNCTIONSET | dpFunction);
     if (status != HD44780_OK) { return status; }
 
     dpControl = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
-    status = SendCommand(LCD_DISPLAYCONTROL | dpControl);
+    status = hd44780_SendCommand(LCD_DISPLAYCONTROL | dpControl);
     if (status != HD44780_OK) { return status; }
 
-    status = SendCommand(LCD_CLEARDISPLAY);
+    status = hd44780_SendCommand(LCD_CLEARDISPLAY);
     if (status != HD44780_OK) { return status; }
-    DelayUS(2000);
+    hd44780_DelayUS(2000);
 
     dpMode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
-    status = SendCommand(LCD_ENTRYMODESET | dpMode);
+    status = hd44780_SendCommand(LCD_ENTRYMODESET | dpMode);
     if (status != HD44780_OK) { return status; }
-    DelayUS(4500);
+    hd44780_DelayUS(4500);
 
-    status = SendCommand(LCD_RETURNHOME);
+    status = hd44780_SendCommand(LCD_RETURNHOME);
     if (status != HD44780_OK) { return status; }
-    DelayUS(2000);
+    hd44780_DelayUS(2000);
 
     HD44780_Initialized = 1U;
 
@@ -332,9 +332,9 @@ HD44780_Status_t HD44780_Clear(void)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
-    HD44780_Status_t status = SendCommand(LCD_CLEARDISPLAY);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_CLEARDISPLAY);
     if (status != HD44780_OK) { return status; }
-    DelayUS(2000);
+    hd44780_DelayUS(2000);
     return HD44780_OK;
 }
 
@@ -348,9 +348,9 @@ HD44780_Status_t HD44780_Home(void)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
-    HD44780_Status_t status = SendCommand(LCD_RETURNHOME);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_RETURNHOME);
     if (status != HD44780_OK) { return status; }
-    DelayUS(2000);
+    hd44780_DelayUS(2000);
     return HD44780_OK;
 }
 
@@ -369,7 +369,7 @@ HD44780_Status_t HD44780_SetCursor(uint8_t col, uint8_t row)
 
     const uint8_t row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
     if (row >= dpRows) { row = dpRows - 1; }
-    return SendCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
+    return hd44780_SendCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
 }
 
 /**
@@ -383,7 +383,7 @@ HD44780_Status_t HD44780_NoDisplay(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempControl = dpControl & ~LCD_DISPLAYON;
-    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_DISPLAYCONTROL | tempControl);
     if (status == HD44780_OK) { dpControl = tempControl; }
     return status;
 }
@@ -399,7 +399,7 @@ HD44780_Status_t HD44780_Display(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempControl = dpControl | LCD_DISPLAYON;
-    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_DISPLAYCONTROL | tempControl);
     if (status == HD44780_OK) { dpControl = tempControl; }
     return status;
 }
@@ -415,7 +415,7 @@ HD44780_Status_t HD44780_NoCursor(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempControl = dpControl & ~LCD_CURSORON;
-    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_DISPLAYCONTROL | tempControl);
     if (status == HD44780_OK) { dpControl = tempControl; }
     return status;
 }
@@ -431,7 +431,7 @@ HD44780_Status_t HD44780_Cursor(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempControl = dpControl | LCD_CURSORON;
-    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_DISPLAYCONTROL | tempControl);
     if (status == HD44780_OK) { dpControl = tempControl; }
     return status;
 }
@@ -447,7 +447,7 @@ HD44780_Status_t HD44780_NoBlink(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempControl = dpControl & ~LCD_BLINKON;
-    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_DISPLAYCONTROL | tempControl);
     if (status == HD44780_OK) { dpControl = tempControl; }
     return status;
 }
@@ -463,7 +463,7 @@ HD44780_Status_t HD44780_Blink(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempControl = dpControl | LCD_BLINKON;
-    HD44780_Status_t status = SendCommand(LCD_DISPLAYCONTROL | tempControl);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_DISPLAYCONTROL | tempControl);
     if (status == HD44780_OK) { dpControl = tempControl; }
     return status;
 }
@@ -478,7 +478,7 @@ HD44780_Status_t HD44780_ScrollDisplayLeft(void)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
-    return SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
+    return hd44780_SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
 }
 
 /**
@@ -491,7 +491,7 @@ HD44780_Status_t HD44780_ScrollDisplayRight(void)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
-    return SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
+    return hd44780_SendCommand(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
 }
 
 /**
@@ -505,7 +505,7 @@ HD44780_Status_t HD44780_LeftToRight(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempMode = dpMode | LCD_ENTRYLEFT;
-    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_ENTRYMODESET | tempMode);
     if (status == HD44780_OK) { dpMode = tempMode; }
     return status;
 }
@@ -521,7 +521,7 @@ HD44780_Status_t HD44780_RightToLeft(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempMode = dpMode & ~LCD_ENTRYLEFT;
-    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_ENTRYMODESET | tempMode);
     if (status == HD44780_OK) { dpMode = tempMode; }
     return status;
 }
@@ -537,7 +537,7 @@ HD44780_Status_t HD44780_AutoScroll(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
     uint8_t tempMode = dpMode | LCD_ENTRYSHIFTINCREMENT;
-    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_ENTRYMODESET | tempMode);
     if (status == HD44780_OK) { dpMode = tempMode; }
     return status;
 }
@@ -553,7 +553,7 @@ HD44780_Status_t HD44780_NoAutoScroll(void)
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
     
     uint8_t tempMode = dpMode & ~LCD_ENTRYSHIFTINCREMENT;
-    HD44780_Status_t status = SendCommand(LCD_ENTRYMODESET | tempMode);
+    HD44780_Status_t status = hd44780_SendCommand(LCD_ENTRYMODESET | tempMode);
     if (status == HD44780_OK) { dpMode = tempMode; }
     return status;
 }
@@ -575,12 +575,12 @@ HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charm
 
     HD44780_Status_t status;
     location &= 0x7;
-    status = SendCommand(LCD_SETCGRAMADDR | (location << 3));
+    status = hd44780_SendCommand(LCD_SETCGRAMADDR | (location << 3));
     if (status != HD44780_OK) { return status; }
 
     for (int i = 0; i < 8; i++)
     {
-        status = SendChar(charmap[i]);
+        status = hd44780_SendChar(charmap[i]);
         if (status != HD44780_OK) { return status; }
     }
 
@@ -599,7 +599,7 @@ HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
-    return SendChar(index);
+    return hd44780_SendChar(index);
 }
 
 /**
@@ -619,7 +619,7 @@ HD44780_Status_t HD44780_PrintStr(const char c[])
     HD44780_Status_t status;
     while (*c)
     {
-        status = SendChar((uint8_t)*c++);
+        status = hd44780_SendChar((uint8_t)*c++);
         if (status != HD44780_OK) { return status; }
     }
 
@@ -652,7 +652,7 @@ HD44780_Status_t HD44780_NoBacklight(void)
 
     uint8_t prevBacklight = dpBacklight;
     dpBacklight = LCD_NOBACKLIGHT;
-    HD44780_Status_t status = ExpanderWrite(0);
+    HD44780_Status_t status = hd44780_ExpanderWrite(0);
     if (status != HD44780_OK) { dpBacklight = prevBacklight; }
     return status;
 }
@@ -669,7 +669,7 @@ HD44780_Status_t HD44780_Backlight(void)
     
     uint8_t prevBacklight = dpBacklight;
     dpBacklight = LCD_BACKLIGHT;
-    HD44780_Status_t status = ExpanderWrite(0);
+    HD44780_Status_t status = hd44780_ExpanderWrite(0);
     if (status != HD44780_OK) { dpBacklight = prevBacklight; }
     return status;
 }
