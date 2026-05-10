@@ -55,7 +55,16 @@ const uint8_t heart[8] = {
         0b00000
 };
 
-const uint8_t Cyrilic[8] = {0x1F, 0x10, 0x1E, 0x11, 0x11, 0x11, 0x1E, 0x00};
+const uint8_t Cyrillic[8] = {
+        0b11111, 
+        0b10000, 
+        0b11110, 
+        0b10001, 
+        0b10001, 
+        0b10001, 
+        0b11110, 
+        0b00000
+};
 
 const uint8_t Flecha[8] = {
         0b00000,
@@ -108,9 +117,9 @@ static HD44780_Status_t SendChar(uint8_t ch);
 // ============================================================================
 
 /**
- * @brief 
- * 
- * @param us 
+ * @brief Genera un retardo en microsegundos usando el contador de ciclos DWT.
+ *
+ * @param[in] us Tiempo de espera en microsegundos.
  */
 static void DelayUS(uint32_t us)
 {
@@ -125,8 +134,7 @@ static void DelayUS(uint32_t us)
 }
 
 /**
- * @brief 
- * 
+ * @brief Habilita el contador de ciclos DWT para temporización de microsegundos.
  */
 static void DelayInit(void)
 {
@@ -144,10 +152,11 @@ static void DelayInit(void)
 }
 
 /**
- * @brief 
- * 
- * @param _data 
- * @return HD44780_Status_t 
+ * @brief Envía un byte al expansor I2C PCF8574, incluyendo el bit de retroiluminación.
+ *
+ * @param[in] _data Dato a enviar al expansor (se aplica OR con dpBacklight).
+ * @return HD44780_Status_t HD44780_OK si la transmisión fue exitosa,
+ *         HD44780_TIMEOUT o HD44780_ERROR en caso contrario.
  */
 static HD44780_Status_t ExpanderWrite(uint8_t _data)
 {
@@ -161,10 +170,10 @@ static HD44780_Status_t ExpanderWrite(uint8_t _data)
 }
 
 /**
- * @brief 
- * 
- * @param _data 
- * @return HD44780_Status_t 
+ * @brief Genera un pulso en el pin Enable para latchear datos en el LCD.
+ *
+ * @param[in] _data Dato con el bit Enable a pulsar.
+ * @return HD44780_Status_t HD44780_OK si el pulso fue exitoso, error en caso contrario.
  */
 static HD44780_Status_t PulseEnable(uint8_t _data)
 {
@@ -182,10 +191,10 @@ static HD44780_Status_t PulseEnable(uint8_t _data)
 }
 
 /**
- * @brief 
- * 
- * @param value 
- * @return HD44780_Status_t 
+ * @brief Escribe un nibble de 4 bits en el LCD a través del expansor I2C.
+ *
+ * @param[in] value Nibble a escribir (bits [7:4] contienen los datos).
+ * @return HD44780_Status_t HD44780_OK si la escritura fue exitosa, error en caso contrario.
  */
 static HD44780_Status_t Write4Bits(uint8_t value)
 {
@@ -197,11 +206,11 @@ static HD44780_Status_t Write4Bits(uint8_t value)
 }
 
 /**
- * @brief 
- * 
- * @param value 
- * @param mode 
- * @return HD44780_Status_t 
+ * @brief Envía un byte completo al LCD en modo 4 bits (nibble alto primero, luego nibble bajo).
+ *
+ * @param[in] value Byte a enviar al LCD.
+ * @param[in] mode  Modo de envío: 0 para comando (RS=0), RS para dato (RS=1).
+ * @return HD44780_Status_t HD44780_OK si el envío fue exitoso, error en caso contrario.
  */
 static HD44780_Status_t Send(uint8_t value, uint8_t mode)
 {
@@ -219,10 +228,10 @@ static HD44780_Status_t Send(uint8_t value, uint8_t mode)
 }
 
 /**
- * @brief 
- * 
- * @param cmd 
- * @return HD44780_Status_t 
+ * @brief Envía un byte de comando al LCD (RS = 0).
+ *
+ * @param[in] cmd Comando a enviar al controlador HD44780.
+ * @return HD44780_Status_t HD44780_OK si el comando fue enviado correctamente, error en caso contrario.
  */
 static HD44780_Status_t SendCommand(uint8_t cmd)
 {
@@ -230,10 +239,10 @@ static HD44780_Status_t SendCommand(uint8_t cmd)
 }
 
 /**
- * @brief 
- * 
- * @param ch 
- * @return HD44780_Status_t 
+ * @brief Envía un byte de dato (carácter) al LCD (RS = 1).
+ *
+ * @param[in] ch Carácter a mostrar en el LCD.
+ * @return HD44780_Status_t HD44780_OK si el carácter fue enviado correctamente, error en caso contrario.
  */
 static HD44780_Status_t SendChar(uint8_t ch)
 {
@@ -248,7 +257,7 @@ static HD44780_Status_t SendChar(uint8_t ch)
  * @brief Inicializa el módulo HD44780 con el handle I2C.
  *
  * @param[in] hi2c Puntero al handle de I2C.
- * @param[in] rows Número de filas del display (1 o 2).
+ * @param[in] rows Número de filas del display.
  * @return HD44780_Status_t Estado de la inicialización (OK, ERROR, etc.)
  */
 HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
@@ -314,9 +323,10 @@ HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Borra el contenido del display y retorna el cursor a la posición inicial (0,0).
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_Clear(void)
 {
@@ -329,9 +339,10 @@ HD44780_Status_t HD44780_Clear(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Retorna el cursor a la posición inicial (0,0) sin borrar el contenido del display.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_Home(void)
 {
@@ -344,25 +355,28 @@ HD44780_Status_t HD44780_Home(void)
 }
 
 /**
- * @brief 
- * 
- * @param col 
- * @param row 
- * @return HD44780_Status_t 
+ * @brief Posiciona el cursor en la columna y fila especificadas.
+ *
+ * @param[in] col Columna (posición horizontal), comienza en 0.
+ * @param[in] row Fila (posición vertical), comienza en 0. Si supera el número de filas
+ *                configuradas, se ajusta a la última fila disponible.
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_SetCursor(uint8_t col, uint8_t row)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
 
-    const int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
+    const uint8_t row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
     if (row >= dpRows) { row = dpRows - 1; }
     return SendCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Apaga el display conservando el contenido en la memoria del LCD.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_NoDisplay(void)
 {
@@ -375,9 +389,10 @@ HD44780_Status_t HD44780_NoDisplay(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Enciende el display para mostrar el contenido almacenado en la memoria del LCD.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_Display(void)
 {
@@ -390,9 +405,10 @@ HD44780_Status_t HD44780_Display(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Oculta el cursor de subrayado del display.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_NoCursor(void)
 {
@@ -405,9 +421,10 @@ HD44780_Status_t HD44780_NoCursor(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Muestra el cursor de subrayado en la posición actual del display.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_Cursor(void)
 {
@@ -420,9 +437,10 @@ HD44780_Status_t HD44780_Cursor(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Desactiva el parpadeo del cursor.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_NoBlink(void)
 {
@@ -435,9 +453,10 @@ HD44780_Status_t HD44780_NoBlink(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Activa el parpadeo del cursor (bloque parpadeante en la posición actual).
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_Blink(void)
 {
@@ -450,9 +469,10 @@ HD44780_Status_t HD44780_Blink(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Desplaza el contenido del display una posición hacia la izquierda.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_ScrollDisplayLeft(void)
 {
@@ -462,9 +482,10 @@ HD44780_Status_t HD44780_ScrollDisplayLeft(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Desplaza el contenido del display una posición hacia la derecha.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_ScrollDisplayRight(void)
 {
@@ -474,9 +495,10 @@ HD44780_Status_t HD44780_ScrollDisplayRight(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Configura la dirección de escritura de izquierda a derecha (modo por defecto).
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_LeftToRight(void)
 {
@@ -489,9 +511,10 @@ HD44780_Status_t HD44780_LeftToRight(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Configura la dirección de escritura de derecha a izquierda.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_RightToLeft(void)
 {
@@ -504,9 +527,10 @@ HD44780_Status_t HD44780_RightToLeft(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Activa el desplazamiento automático del display al escribir un carácter.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_AutoScroll(void)
 {
@@ -519,9 +543,10 @@ HD44780_Status_t HD44780_AutoScroll(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Desactiva el desplazamiento automático del display.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_NoAutoScroll(void)
 {
@@ -534,11 +559,14 @@ HD44780_Status_t HD44780_NoAutoScroll(void)
 }
 
 /**
- * @brief 
- * 
- * @param location 
- * @param charmap 
- * @return HD44780_Status_t 
+ * @brief Crea un carácter personalizado en la memoria CGRAM del LCD.
+ *
+ * @param[in] location Posición en CGRAM donde almacenar el carácter (0–7).
+ * @param[in] charmap  Array de 8 bytes con el patrón del carácter (5 bits útiles por fila).
+ * @return HD44780_Status_t
+ *         - HD44780_OK              si el carácter fue creado correctamente.
+ *         - HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
+ *         - HD44780_INVALID_PARAM   si @p charmap es NULL.
  */
 HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charmap[])
 {
@@ -560,10 +588,12 @@ HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charm
 }
 
 /**
- * @brief 
- * 
- * @param index 
- * @return HD44780_Status_t 
+ * @brief Imprime en el display un carácter especial previamente guardado en CGRAM.
+ *
+ * @param[in] index Índice del carácter en CGRAM (0–7), correspondiente al usado en
+ *                  HD44780_CreateSpecialChar().
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index)
 {
@@ -573,10 +603,13 @@ HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index)
 }
 
 /**
- * @brief 
- * 
- * @param c 
- * @return HD44780_Status_t 
+ * @brief Imprime una cadena de caracteres terminada en null en el display.
+ *
+ * @param[in] c Puntero a la cadena de caracteres a imprimir.
+ * @return HD44780_Status_t
+ *         - HD44780_OK              si todos los caracteres fueron enviados correctamente.
+ *         - HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
+ *         - HD44780_INVALID_PARAM   si @p c es NULL.
  */
 HD44780_Status_t HD44780_PrintStr(const char c[])
 {
@@ -594,10 +627,11 @@ HD44780_Status_t HD44780_PrintStr(const char c[])
 }
 
 /**
- * @brief 
- * 
- * @param new_val 
- * @return HD44780_Status_t 
+ * @brief Establece el estado de la retroiluminación del display.
+ *
+ * @param[in] new_val Valor de retroiluminación: distinto de 0 para encender, 0 para apagar.
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_SetBacklight(uint8_t new_val)
 {
@@ -607,9 +641,10 @@ HD44780_Status_t HD44780_SetBacklight(uint8_t new_val)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Apaga la retroiluminación del display.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_NoBacklight(void)
 {
@@ -623,9 +658,10 @@ HD44780_Status_t HD44780_NoBacklight(void)
 }
 
 /**
- * @brief 
- * 
- * @return HD44780_Status_t 
+ * @brief Enciende la retroiluminación del display.
+ *
+ * @return HD44780_Status_t HD44780_OK si la operación fue exitosa,
+ *         HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
  */
 HD44780_Status_t HD44780_Backlight(void)
 {
