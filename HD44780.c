@@ -630,6 +630,26 @@ HD44780_Status_t HD44780_PrintStr(const char c[])
 }
 
 /**
+ * @brief Imprime un número entero en el display, convirtiéndolo a su representación decimal.
+ *
+ * @param[in] num Número entero a imprimir.
+ * @return HD44780_Status_t
+ *         - HD44780_OK              si todos los caracteres fueron enviados correctamente.
+ *         - HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
+ *         - HD44780_ERROR           si ocurrió un error interno al convertir el número.
+ */
+HD44780_Status_t HD44780_PrintInt(int num)
+{
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+
+    char buffer[12];
+    int length = snprintf(buffer, sizeof(buffer), "%d", num);
+    if (length < 0 || length >= (int)sizeof(buffer)) { return HD44780_ERROR; }
+
+    return HD44780_PrintStr(buffer);
+}
+
+/**
  * @brief Establece el estado de la retroiluminación del display.
  *
  * @param[in] new_val Valor de retroiluminación: distinto de 0 para encender, 0 para apagar.

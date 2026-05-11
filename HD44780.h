@@ -15,6 +15,7 @@
 // ============================================================================
 
 #include "main.h"
+#include <stdio.h>
 
 // ============================================================================
 // MACROS Y CONSTANTES DE COMANDOS HD44780
@@ -288,6 +289,17 @@ HD44780_Status_t HD44780_SetBacklight(uint8_t new_val);
  *         - HD44780_INVALID_PARAM   si @p c es NULL.
  */
 HD44780_Status_t HD44780_PrintStr(const char c[]);
+
+/**
+ * @brief Imprime un número entero en el display, convirtiéndolo a su representación decimal.
+ *
+ * @param[in] num Número entero a imprimir.
+ * @return HD44780_Status_t
+ *         - HD44780_OK              si todos los caracteres fueron enviados correctamente.
+ *         - HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
+ *         - HD44780_ERROR           si ocurrió un error interno al convertir el número.
+ */
+HD44780_Status_t HD44780_PrintInt(int num);
 
 /**
  * @brief Borra una fila específica del display escribiendo espacios, sin afectar las demás filas.
