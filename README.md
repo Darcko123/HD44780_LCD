@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![STM32](https://img.shields.io/badge/Platform-STM32-black)](https://www.st.com/en/microcontrollers-microprocessors/stm32f4-series.html)
-[![Version](https://img.shields.io/badge/Version-2.0.0-green.svg)](https://github.com/Darcko123/HD44780_LCD)
+[![Version](https://img.shields.io/badge/Version-2.1.0-green.svg)](https://github.com/Darcko123/HD44780_LCD)
 [![Protocol](https://img.shields.io/badge/Protocol-I2C-green.svg)](https://github.com/Darcko123/HD44780_LCD)
 
 > **Fork de:** [eziya/STM32_HAL_I2C_HD44780](https://github.com/eziya/STM32_HAL_I2C_HD44780)  
@@ -29,9 +29,11 @@
     - [2. Funciones Públicas](#2-funciones-públicas)
       - [`HD44780_Init()` - Inicialización del Driver](#hd44780_init---inicialización-del-driver)
       - [`HD44780_Clear()` - Borrar pantalla](#hd44780_clear---borrar-pantalla)
+      - [`HD44780_ClearLine()` - Borrar una fila](#hd44780_clearline---borrar-una-fila)
       - [`HD44780_Home()` - Regresar al inicio](#hd44780_home---regresar-al-inicio)
       - [`HD44780_SetCursor()` - Posicionar cursor](#hd44780_setcursor---posicionar-cursor)
       - [`HD44780_PrintStr()` - Imprimir cadena](#hd44780_printstr---imprimir-cadena)
+      - [`HD44780_PrintInt()` - Imprimir número entero](#hd44780_printint---imprimir-número-entero)
       - [`HD44780_PrintSpecialChar()` - Imprimir carácter especial](#hd44780_printspecialchar---imprimir-carácter-especial)
       - [`HD44780_CreateSpecialChar()` - Crear carácter personalizado](#hd44780_createspecialchar---crear-carácter-personalizado)
       - [`HD44780_LoadCustomCharacter()` - Cargar carácter personalizado](#hd44780_loadcustomcharacter---cargar-carácter-personalizado)
@@ -42,9 +44,12 @@
       - [Dirección de Escritura](#dirección-de-escritura)
   - [Licencia](#licencia)
   - [Changelog](#changelog)
-    - [\[2.0.0\] - 01-05-2026](#200---01-05-2026)
+    - [\[2.1.0\] - 10-05-2026](#210---10-05-2026)
       - [Added](#added)
       - [Changed](#changed)
+    - [\[2.0.0\] - 01-05-2026](#200---01-05-2026)
+      - [Added](#added-1)
+      - [Changed](#changed-1)
     - [\[1.x.x\] - Versión Original](#1xx---versión-original)
 
 ---
@@ -62,7 +67,7 @@ Es adecuada para mostrar texto, valores de sensores, menús simples o cualquier 
 - **Comunicación I2C**: Interfaz mediante expansor PCF8574 en modo 4 bits, reduciendo los pines GPIO necesarios a solo SDA y SCL.
 - **Manejo robusto de errores**: Todas las funciones públicas retornan `HD44780_Status_t`, con códigos específicos para error de I2C, timeout, módulo no inicializado o parámetro inválido.
 - **Delays de alta precisión basados en DWT**: Utiliza el contador de ciclos del núcleo Cortex-M para delays en microsegundos sin bloquear el scheduler.
-- **Caracteres especiales predefinidos**: Se cargan automáticamente en la CGRAM durante la inicialización (corazón, flecha, campana, símbolo de grados, entre otros).
+- **Caracteres especiales predefinidos**: Siete arrays `const` exportados en `HD44780.h` (`heart`, `degrees`, `Flecha`, `Campana`, etc.) listos para pasarse a `HD44780_CreateSpecialChar()`. Solo se cargan los que la aplicación necesita, eliminando bytes I2C innecesarios en la inicialización.
 - **Control completo de display**: Funciones para encender/apagar pantalla, cursor, parpadeo, retroiluminación y modo de desplazamiento.
 - **Portabilidad**: Compatible con múltiples familias STM32 mediante la capa HAL. Solo requiere cambiar el `#include` del encabezado HAL en `HD44780.h`.
 
@@ -130,7 +135,7 @@ Configura tu periférico I2C en CubeMX/STM32CubeIDE:
 
 ```c
 // En main() después de HAL_Init() y MX_I2C1_Init()
-HD44780_Status_t status = HD44780_Init(&hi2c1, 2);  // display de 2 filas
+HD44780_Status_t status = HD44780_Init(&hi2c1, 2, 16);  // display de 2 filas y 16 columnas
 
 if (status != HD44780_OK) {
     Error_Handler();  // Módulo no responde o handle NULL
@@ -151,22 +156,39 @@ HD44780_PrintStr("Temp: 25.3 C");
 
 ### 3. Caracteres especiales
 
+La librería exporta en `HD44780.h` siete arrays predefinidos listos para usar. Carga únicamente los que tu aplicación necesite después de `HD44780_Init()`:
+
 ```c
-// La inicialización ya carga 7 caracteres en posiciones 0-6.
-// Índice 6 = símbolo de grados (°)
+// Cargar solo los caracteres que se van a usar
+HD44780_CreateSpecialChar(0, degrees);   // símbolo de grados en posición 0
+HD44780_CreateSpecialChar(1, heart);     // corazón en posición 1
+
+// Imprimir temperatura con símbolo de grados
 HD44780_SetCursor(10, 1);
 HD44780_PrintStr("25.3");
-HD44780_PrintSpecialChar(6);   // imprime °
+HD44780_PrintSpecialChar(0);   // imprime °
 HD44780_PrintStr("C");
 
-// También puedes definir tu propio carácter en cualquier posición libre (0-7):
+// También puedes definir tu propio carácter en cualquier posición (0-7):
 uint8_t myChar[8] = {0x0E, 0x0E, 0x04, 0x1F, 0x04, 0x04, 0x04, 0x00};
-HD44780_CreateSpecialChar(7, myChar);
-HD44780_PrintSpecialChar(7);
+HD44780_CreateSpecialChar(2, myChar);
+HD44780_PrintSpecialChar(2);
 ```
 
+**Arrays predefinidos disponibles en `HD44780.h`:**
+
+| Variable    | Descripción      |
+|-------------|------------------|
+| `special1`  | Carácter especial 1 |
+| `special2`  | Carácter especial 2 |
+| `heart`     | Corazón ♥        |
+| `Cyrilic`   | Carácter cirílico |
+| `Flecha`    | Flecha →         |
+| `Campana`   | Campana          |
+| `degrees`   | Símbolo de grados ° |
+
 > [!NOTE]
-> La CGRAM del HD44780 permite almacenar hasta **8 caracteres personalizados** (posiciones 0–7). Durante `HD44780_Init()` se cargan 7 de forma automática; la posición 7 queda libre para uso del usuario.
+> La CGRAM del HD44780 permite almacenar hasta **8 caracteres personalizados** (posiciones 0–7). Al no cargar ninguno automáticamente, todas las posiciones quedan disponibles para el usuario.
 
 ---
 
@@ -202,18 +224,19 @@ typedef enum {
 
 #### `HD44780_Init()` - Inicialización del Driver
 
-Inicializa el módulo HD44780: configura el handle I2C, ejecuta la secuencia de arranque en modo 4 bits, establece el display en estado por defecto (encendido, sin cursor, sin parpadeo) y carga los caracteres especiales predefinidos en la CGRAM.
+Inicializa el módulo HD44780: configura el handle I2C, ejecuta la secuencia de arranque en modo 4 bits y establece el display en estado por defecto (encendido, sin cursor, sin parpadeo). No carga caracteres en la CGRAM; el usuario llama a `HD44780_CreateSpecialChar()` para los caracteres que necesite.
 
 ```c
-HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows);
+HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows, uint8_t cols);
 ```
 
-| Parámetro | Tipo                   | Descripción                          |
-|-----------|------------------------|--------------------------------------|
-| `hi2c`    | `I2C_HandleTypeDef*`   | Puntero al handle I2C de HAL         |
-| `rows`    | `uint8_t`              | Número de filas del display (1 o 2)  |
+| Parámetro | Tipo                   | Descripción                                      |
+|-----------|------------------------|--------------------------------------------------|
+| `hi2c`    | `I2C_HandleTypeDef*`   | Puntero al handle I2C de HAL                     |
+| `rows`    | `uint8_t`              | Número de filas del display (1 o 2)              |
+| `cols`    | `uint8_t`              | Número de columnas del display (p. ej. 16 o 20)  |
 
-**Retorna**: `HD44780_OK` si la inicialización fue exitosa, `HD44780_INVALID_PARAM` si `hi2c` es NULL o `rows` es 0, `HD44780_ERROR` / `HD44780_TIMEOUT` si falla la comunicación I2C.
+**Retorna**: `HD44780_OK` si la inicialización fue exitosa, `HD44780_INVALID_PARAM` si `hi2c` es NULL, `rows` es 0 o `cols` es 0, `HD44780_ERROR` / `HD44780_TIMEOUT` si falla la comunicación I2C.
 
 **Secuencia interna:**
 
@@ -221,7 +244,6 @@ HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows);
 2. Inicializa el contador DWT para delays en microsegundos.
 3. Ejecuta la secuencia de reset en modo 4 bits según el datasheet del HD44780.
 4. Configura el display: modo 4 bits, número de líneas, cursor apagado, retroiluminación encendida.
-5. Carga 7 caracteres especiales predefinidos en la CGRAM (posiciones 0–6).
 
 ---
 
@@ -234,6 +256,28 @@ HD44780_Status_t HD44780_Clear(void);
 ```
 
 **Retorna**: `HD44780_OK` si la operación fue exitosa, `HD44780_ERROR` / `HD44780_TIMEOUT` si falla la comunicación I2C.
+
+---
+
+#### `HD44780_ClearLine()` - Borrar una fila
+
+Borra el contenido de una fila específica escribiendo espacios en todas sus columnas, sin afectar el resto del display. Al terminar, deja el cursor al inicio de la fila borrada.
+
+```c
+HD44780_Status_t HD44780_ClearLine(uint8_t row);
+```
+
+| Parámetro | Tipo      | Descripción                              | Rango         |
+|-----------|-----------|------------------------------------------|---------------|
+| `row`     | `uint8_t` | Fila a borrar (0-indexed)                | 0 – `rows-1`  |
+
+**Retorna**: `HD44780_OK` si la operación fue exitosa, `HD44780_NOT_INITIALIZED` si el módulo no fue inicializado, `HD44780_INVALID_PARAM` si `row` es mayor o igual al número de filas configuradas, `HD44780_ERROR` / `HD44780_TIMEOUT` si falla la comunicación I2C.
+
+```c
+// Borrar solo la segunda fila y escribir nuevo contenido
+HD44780_ClearLine(1);
+HD44780_PrintStr("Nuevo texto");
+```
 
 ---
 
@@ -282,6 +326,30 @@ HD44780_Status_t HD44780_PrintStr(const char c[]);
 
 ---
 
+#### `HD44780_PrintInt()` - Imprimir número entero
+
+Convierte un número entero a su representación decimal y lo imprime en la posición actual del cursor.
+
+```c
+HD44780_Status_t HD44780_PrintInt(int num);
+```
+
+| Parámetro | Tipo  | Descripción              |
+|-----------|-------|--------------------------|
+| `num`     | `int` | Número entero a imprimir |
+
+**Retorna**: `HD44780_OK` si el número se imprimió correctamente, `HD44780_NOT_INITIALIZED` si el módulo no fue inicializado, `HD44780_ERROR` si ocurrió un error interno al convertir el número.
+
+```c
+// Imprimir un valor de sensor
+HD44780_SetCursor(0, 0);
+HD44780_PrintStr("Temp: ");
+HD44780_PrintInt(25);
+HD44780_PrintStr(" C");
+```
+
+---
+
 #### `HD44780_PrintSpecialChar()` - Imprimir carácter especial
 
 Imprime en la posición actual del cursor el carácter almacenado en la CGRAM en el índice indicado.
@@ -294,19 +362,10 @@ HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index);
 |-----------|-----------|------------------------------------------|-------|
 | `index`   | `uint8_t` | Índice del carácter en CGRAM             | 0 – 7 |
 
-**Caracteres predefinidos cargados en `HD44780_Init()`:**
-
-| Índice | Carácter     |
-|--------|--------------|
-| 0      | Special 1    |
-| 1      | Special 2    |
-| 2      | Corazón ♥    |
-| 3      | Cirílico     |
-| 4      | Flecha →     |
-| 5      | Campana 🔔   |
-| 6      | Grados °     |
-
 **Retorna**: `HD44780_OK` si la operación fue exitosa, `HD44780_NOT_INITIALIZED` si el módulo no fue inicializado, `HD44780_ERROR` / `HD44780_TIMEOUT` si falla la comunicación I2C.
+
+> [!NOTE]
+> El índice debe coincidir con la posición `location` usada al llamar a `HD44780_CreateSpecialChar()`. Si no se cargó ningún carácter en esa posición, el resultado en pantalla es indefinido.
 
 ---
 
@@ -315,13 +374,21 @@ HD44780_Status_t HD44780_PrintSpecialChar(uint8_t index);
 Define un carácter personalizado de 5×8 píxeles y lo almacena en la CGRAM del LCD en la posición indicada.
 
 ```c
-HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, uint8_t charmap[]);
+HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, const uint8_t charmap[]);
 ```
 
-| Parámetro  | Tipo       | Descripción                                      | Rango |
-|------------|------------|--------------------------------------------------|-------|
-| `location` | `uint8_t`  | Posición en CGRAM                                | 0 – 7 |
-| `charmap`  | `uint8_t*` | Array de 8 bytes con el mapa de bits del carácter | —    |
+| Parámetro  | Tipo              | Descripción                                       | Rango |
+|------------|-------------------|---------------------------------------------------|-------|
+| `location` | `uint8_t`         | Posición en CGRAM                                 | 0 – 7 |
+| `charmap`  | `const uint8_t*`  | Array de 8 bytes con el mapa de bits del carácter | —     |
+
+Puedes pasar directamente cualquiera de los arrays predefinidos exportados en `HD44780.h`:
+
+```c
+HD44780_CreateSpecialChar(0, degrees);
+HD44780_CreateSpecialChar(1, heart);
+HD44780_CreateSpecialChar(2, Campana);
+```
 
 **Retorna**: `HD44780_OK` si el carácter se almacenó correctamente, `HD44780_INVALID_PARAM` si `charmap` es NULL, `HD44780_ERROR` / `HD44780_TIMEOUT` si falla la comunicación I2C.
 
@@ -332,13 +399,13 @@ HD44780_Status_t HD44780_CreateSpecialChar(uint8_t location, uint8_t charmap[]);
 Alias de `HD44780_CreateSpecialChar()`. Carga un carácter personalizado en la CGRAM.
 
 ```c
-HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, uint8_t *rows);
+HD44780_Status_t HD44780_LoadCustomCharacter(uint8_t char_num, const uint8_t *rows);
 ```
 
-| Parámetro  | Tipo       | Descripción                                      |
-|------------|------------|--------------------------------------------------|
-| `char_num` | `uint8_t`  | Posición en CGRAM (0–7)                          |
-| `rows`     | `uint8_t*` | Array de 8 bytes con el mapa de bits del carácter |
+| Parámetro  | Tipo              | Descripción                                      |
+|------------|-------------------|--------------------------------------------------|
+| `char_num` | `uint8_t`         | Posición en CGRAM (0–7)                          |
+| `rows`     | `const uint8_t*`  | Array de 8 bytes con el mapa de bits del carácter |
 
 **Retorna**: `HD44780_OK` si la operación fue exitosa, `HD44780_INVALID_PARAM` si `rows` es NULL, `HD44780_ERROR` / `HD44780_TIMEOUT` si falla la comunicación I2C.
 
@@ -444,6 +511,27 @@ Este proyecto está bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE)
 
 Todos los cambios notables de esta librería se documentan en esta sección.  
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
+
+---
+
+### [2.1.0] - 10-05-2026
+
+#### Added
+- Nueva función `HD44780_ClearLine(uint8_t row)` para borrar una fila específica del display sin afectar las demás. Escribe espacios en todas las columnas de la fila indicada y deja el cursor al inicio de esa fila.
+- Nueva función `HD44780_PrintInt(int num)` para imprimir un número entero directamente en el display, convirtiéndolo internamente a cadena mediante `snprintf` y delegando a `HD44780_PrintStr()`.
+- Documentación completa estilo Doxygen para todas las funciones, tipos de datos y parámetros, mejorando la legibilidad y usabilidad de la API.
+
+#### Changed
+
+- Los siete arrays de caracteres especiales (`special1`, `special2`, `heart`, `Cyrilic`, `Flecha`, `Campana`, `degrees`) ya no son privados (`static`). Ahora son `const` con enlace externo y se declaran en `HD44780.h` mediante `extern const uint8_t`.
+- `HD44780_Init()` **ya no carga caracteres en la CGRAM**. El usuario llama a `HD44780_CreateSpecialChar()` únicamente para los caracteres que su aplicación necesite, eliminando hasta 7 × 9 bytes I2C innecesarios en la inicialización.
+- Firmas de `HD44780_CreateSpecialChar()` y `HD44780_LoadCustomCharacter()` actualizadas a `const uint8_t*` para aceptar los arrays predefinidos sin advertencias del compilador.
+- Las funciones que modifican `dpControl`, `dpMode` y `dpBacklight` (`NoDisplay`, `Display`, `NoCursor`, `Cursor`, `NoBlink`, `Blink`, `LeftToRight`, `RightToLeft`, `AutoScroll`, `NoAutoScroll`, `NoBacklight`, `Backlight`) ahora aplican el cambio de estado de forma atómica: calculan el nuevo valor en una variable temporal, envían el comando y solo actualizan la variable interna si la transmisión I2C retorna `HD44780_OK`. Esto evita la pérdida de sincronía entre el estado software y el hardware ante un `HAL_TIMEOUT` o `HAL_ERROR`.
+- Eliminación redundante de `HD44780_LoadCustomCharacter()`, que ahora es un alias directo de `HD44780_CreateSpecialChar()`.
+- Cambio en includes de `HD44780.h` para permitir la selección del encabezado HAL adecuado según la familia STM32, mejorando la portabilidad sin necesidad de modificar el código fuente.
+- Reducción de Delay en innecesarios en `HD44780_Init()` posterior al delay de 40 ms inicial, ya que el HD44780 no requiere delays adicionales entre comandos si se siguen los tiempos mínimos del datasheet. Esto mejora la velocidad de arranque sin comprometer la estabilidad.
+- Renombre de funciones privadas para mantener la consistencia en el estilo de nombrado (ej. `ExpanderWrite` a `HD44780_ExpanderWrite`, `PulseEnable` a `HD44780_PulseEnable`, etc.) y reflejar que ahora retornan `HD44780_Status_t` para propagar errores.
+- `HD44780_Init()` ahora acepta un tercer parámetro `uint8_t cols` (número de columnas del display) para almacenarlo internamente y usarlo en `HD44780_ClearLine()`. Retorna `HD44780_INVALID_PARAM` también si `cols` es 0.
 
 ---
 

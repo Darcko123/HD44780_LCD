@@ -3,7 +3,7 @@
  * @brief Implementation of the HD44780 LCD library.
  *
  * @author Eziya - Daniel Ruiz
- * @date April 30, 2026
+ * @date Mayo 10, 2026
  * @version 2.1.0
  */
 

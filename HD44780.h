@@ -3,7 +3,7 @@
  * @brief Librería para la gestión del módulo LCD HD44780 mediante comunicación I2C.
  *
  * @author Eziya - Daniel Ruiz
- * @date April 30, 2026
+ * @date Mayo 10, 2026
  * @version 2.1.0
  */
 
