@@ -115,13 +115,14 @@ extern "C" {
  * @brief Inicializa el módulo HD44780 con el handle I2C.
  *
  * @param[in] hi2c Puntero al handle de I2C.
- * @param[in] rows Número de filas del display (1 o 2).
+ * @param[in] rows Número de filas del display.
+ * @param[in] cols Número de columnas del display.
  * @return HD44780_Status_t
  *         - HD44780_OK            si la inicialización fue exitosa.
  *         - HD44780_ERROR         si ocurrió un error de comunicación.
- *         - HD44780_INVALID_PARAM si @p hi2c es NULL o @p rows es 0.
+ *         - HD44780_INVALID_PARAM si @p hi2c es NULL, @p rows es 0 o @p cols es 0.
  */
-HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows);
+HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows, uint8_t cols);
 
 /**
  * @brief Borra el display y retorna el cursor a la posición (0,0).
@@ -287,6 +288,18 @@ HD44780_Status_t HD44780_SetBacklight(uint8_t new_val);
  *         - HD44780_INVALID_PARAM   si @p c es NULL.
  */
 HD44780_Status_t HD44780_PrintStr(const char c[]);
+
+/**
+ * @brief Borra una fila específica del display escribiendo espacios, sin afectar las demás filas.
+ *        Deja el cursor al inicio de la fila borrada.
+ *
+ * @param[in] row Fila a borrar, comienza en 0.
+ * @return HD44780_Status_t
+ *         - HD44780_OK              si la operación fue exitosa.
+ *         - HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
+ *         - HD44780_INVALID_PARAM   si @p row es mayor o igual al número de filas configuradas.
+ */
+HD44780_Status_t HD44780_ClearLine(uint8_t row);
 
 #ifdef __cplusplus
 }

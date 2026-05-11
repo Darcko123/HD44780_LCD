@@ -20,6 +20,7 @@ static uint8_t dpFunction;
 static uint8_t dpControl;
 static uint8_t dpMode;
 static uint8_t dpRows;
+static uint8_t dpCols;
 static uint8_t dpBacklight;
 
 const uint8_t special1[8] = {
@@ -258,21 +259,23 @@ static HD44780_Status_t hd44780_SendChar(uint8_t ch)
  *
  * @param[in] hi2c Puntero al handle de I2C.
  * @param[in] rows Número de filas del display.
+ * @param[in] cols Número de columnas del display.
  * @return HD44780_Status_t Estado de la inicialización (OK, ERROR, etc.)
  */
-HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows)
+HD44780_Status_t HD44780_Init(I2C_HandleTypeDef* hi2c, uint8_t rows, uint8_t cols)
 {
     if(hi2c == NULL)
 	{
 		return HD44780_INVALID_PARAM;
 	}
-    if(rows == 0)
-	{ 
+    if(rows == 0 || cols == 0)
+	{
 		return HD44780_INVALID_PARAM;
 	}
 
     HD44780_hi2c = hi2c;
     dpRows       = rows;
+    dpCols       = cols;
     dpBacklight  = LCD_BACKLIGHT;
     dpFunction   = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
 
@@ -666,10 +669,37 @@ HD44780_Status_t HD44780_NoBacklight(void)
 HD44780_Status_t HD44780_Backlight(void)
 {
     if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
-    
+
     uint8_t prevBacklight = dpBacklight;
     dpBacklight = LCD_BACKLIGHT;
     HD44780_Status_t status = hd44780_ExpanderWrite(0);
     if (status != HD44780_OK) { dpBacklight = prevBacklight; }
     return status;
+}
+
+/**
+ * @brief Borra una fila específica del display escribiendo espacios, sin afectar las demás filas.
+ *        Deja el cursor al inicio de la fila borrada.
+ *
+ * @param[in] row Fila a borrar, comienza en 0.
+ * @return HD44780_Status_t
+ *         - HD44780_OK              si la operación fue exitosa.
+ *         - HD44780_NOT_INITIALIZED si el módulo no fue inicializado.
+ *         - HD44780_INVALID_PARAM   si @p row es mayor o igual al número de filas configuradas.
+ */
+HD44780_Status_t HD44780_ClearLine(uint8_t row)
+{
+    if (HD44780_Initialized != 1U) { return HD44780_NOT_INITIALIZED; }
+    if (row >= dpRows)             { return HD44780_INVALID_PARAM;   }
+
+    HD44780_Status_t status = HD44780_SetCursor(0, row);
+    if (status != HD44780_OK) { return status; }
+
+    for (uint8_t i = 0; i < dpCols; i++)
+    {
+        status = hd44780_SendChar(' ');
+        if (status != HD44780_OK) { return status; }
+    }
+
+    return HD44780_SetCursor(0, row);
 }
